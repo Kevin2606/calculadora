@@ -27,22 +27,30 @@
     
         return $resultado;
     }
-    function calculo(){
-        
-    }
-    function calculadora($operaciones, $numeros, $stringOriginal, $operaciones2){
+    function calculadora($operaciones, $numeros, $stringOriginal){
         $stringOriginalCopy = $stringOriginal;
+        $operaciones2 = $operaciones;
+        sort($operaciones2);
         for($i=0; $i<count($operaciones); $i++){
             $op = (int) $operaciones[$i];
-            $opNext = isset($operaciones[$i+1]) ? (int) $operaciones[$i+1] : $op+1;
-            $indInicio = $op > $opNext ? $opNext : 0;
-            $indFinal = $op > $opNext ? $op : $opNext;
+            $prueba = strpos(implode(" ", $operaciones2), $operaciones[$i])+1;
+            $valNext = $operaciones2[$prueba] == null ? strlen($stringOriginal) : (int) $operaciones2[$prueba];
+            $indInicio = $op > $valNext ? $valNext : 0;
+            $indFinal = $op > $valNext ? $op : $valNext;
             $numero = substr($stringOriginalCopy, $indInicio, $indFinal);
-            print_r($indFinal);
-            var_dump($i);
             if ($stringOriginal[$op] == "*") {
                 $subcadenaNew = explode("*", $numero);
                 $result = (int) $subcadenaNew[0] * (int) $subcadenaNew[1];
+                $stringOriginalCopy = str_replace($numero, $result, $stringOriginalCopy);
+            }
+            else if ($stringOriginal[$op] == "/") {
+                $subcadenaNew = explode("/", $numero);
+                if ($subcadenaNew[1] == 0) {
+                    $stringOriginalCopy = str_replace($numero, "Error", $stringOriginalCopy);
+                    $_SESSION['num'] = $stringOriginalCopy;
+                    return;
+                }
+                $result = (int) $subcadenaNew[0] / (int) $subcadenaNew[1];
                 $stringOriginalCopy = str_replace($numero, $result, $stringOriginalCopy);
             }
             else if($stringOriginal[$op] == "+"){
@@ -50,7 +58,14 @@
                 $result = (int) $subcadenaNew[0] + (int) $subcadenaNew[1];
                 $stringOriginalCopy = str_replace($numero, $result, $stringOriginalCopy);
             }
+            else if ($stringOriginal[$op] == "-") {
+                $subcadenaNew = explode("-", $numero);
+                $result = (int) $subcadenaNew[0] - (int) $subcadenaNew[1];
+                $stringOriginalCopy = str_replace($numero, $result, $stringOriginalCopy);
+            }
         }
+      
+        $_SESSION['num'] = $stringOriginalCopy;
     }
     $op = array(
         "mod" => "mod",
@@ -66,14 +81,17 @@
     session_start();
     if (isset($_POST['numero'])) {
         if ($_POST['numero'] == "=" && isset($_SESSION['num'])) {
-            $indOperaciones = null;
+           $indOperaciones = null;
             foreach($op as $clave => $valor){
                 $indOperaciones .= obtenerIndicesDeCaracter($_SESSION['num'], $clave);
             }
             $indOperaciones2 = str_split($indOperaciones);
             sort($indOperaciones2);
             $resultSubNumeros = separarCadenaPorIndices($_SESSION['num'], $indOperaciones2);
-            calculadora(str_split($indOperaciones), $resultSubNumeros, $_SESSION['num'], $indOperaciones2);
+            calculadora(str_split($indOperaciones), $resultSubNumeros, $_SESSION['num']);
+        }
+        else if($_POST['numero'] == "Borrar"){
+            $_SESSION['num'] = null;
         }
         else if($_POST['numero'] == "<--"){
             $_SESSION['num'] = substr($_SESSION['num'],0, -1);
@@ -103,9 +121,10 @@
 
 <body>
     <div id="container">
+        <form action="calculadora.php" method="post">
         <div id="container_calculadora">
             <div id="calculadora_top">
-                <input type="button" value="Borrar">
+                <input type="submit" name="numero" value="Borrar">
                 <h3>Basic</h3>
             </div>
             <div id="calculadora_display_top">
@@ -121,7 +140,6 @@
                     ?>
                 </p>
             </div>
-            <form action="calculadora.php" method="post">
                 <div id="calculadora_bottons">
                     <div id="column1" class="column">
                         <input type="submit" id="arrow" name="numero" value="<--" class="button form-control">
@@ -158,8 +176,9 @@
                         <input id="button_equal" type="submit" value="=" name="numero" class="button form-control">
                     </div>
                 </div>
-            </form>
-        </div>
+            </div>
+        </form>
+    </div>
 </body>
 
 </html>
