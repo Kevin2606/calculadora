@@ -1,48 +1,5 @@
 <?php
 
-function evaluarExpresion($expresion) {
-    // Reemplazar 'x' por '*' para indicar multiplicación
-    $expresion = str_replace('x', '*', $expresion);
-
-    // Realizar el análisis de la cadena y evaluar la expresión
-    $resultado = evaluarOperaciones($expresion);
-
-    return $resultado;
-}
-
-function evaluarOperaciones($expresion) {
-    $numeros = array_map('intval', preg_split('/[-+\/*]/', $expresion));
-    $operadores = preg_split('/\d+/', $expresion, -1, PREG_SPLIT_NO_EMPTY);
-    
-    $resultado = $numeros[0];
-    $numeros_count = count($numeros);
-    
-    for ($i = 1; $i < $numeros_count; $i++) {
-        switch ($operadores[$i - 1]) {
-            case '+':
-                $resultado += $numeros[$i];
-                break;
-            case '-':
-                $resultado -= $numeros[$i];
-                break;
-            case '*':
-                $resultado *= $numeros[$i];
-                break;
-            case '/':
-                $resultado /= $numeros[$i];
-                break;
-        }
-    }
-
-    return $resultado;
-}
-
-$expresion = "8*3+6*2";
-$resultado = evaluarExpresion($expresion);
-
-echo "Resultado: " . $resultado;
-
-
     function obtenerIndicesDeCaracter($cadena, $caracter) {
         $longitudCadena = strlen($cadena);
         $indices = null;
@@ -73,65 +30,27 @@ echo "Resultado: " . $resultado;
     function calculo(){
         
     }
-    function calculadora($operaciones, $numeros, $stringOriginal){
-        for($i = 0; $i < count($operaciones); $i++){
-            if ($stringOriginal[$operaciones[$i]] == "√") {
-                $numeros[$i] = sqrt((int) $numeros[$i]);
-                unset($operaciones[$i]);
-                $numeros = array_values($numeros);
-                $operaciones = array_values($operaciones);
-                $i--;
+    function calculadora($operaciones, $numeros, $stringOriginal, $operaciones2){
+        $stringOriginalCopy = $stringOriginal;
+        for($i=0; $i<count($operaciones); $i++){
+            $op = (int) $operaciones[$i];
+            $opNext = isset($operaciones[$i+1]) ? (int) $operaciones[$i+1] : $op+1;
+            $indInicio = $op > $opNext ? $opNext : 0;
+            $indFinal = $op > $opNext ? $op : $opNext;
+            $numero = substr($stringOriginalCopy, $indInicio, $indFinal);
+            print_r($indFinal);
+            var_dump($i);
+            if ($stringOriginal[$op] == "*") {
+                $subcadenaNew = explode("*", $numero);
+                $result = (int) $subcadenaNew[0] * (int) $subcadenaNew[1];
+                $stringOriginalCopy = str_replace($numero, $result, $stringOriginalCopy);
             }
-            else if($stringOriginal[$operaciones[$i]] == "x²"){
-                $numeros[$i] = pow((int) $numeros[$i], 2);
-                unset($operaciones[$i]);
-                $numeros = array_values($numeros);
-                $operaciones = array_values($operaciones);
-                $i--;
+            else if($stringOriginal[$op] == "+"){
+                $subcadenaNew = explode("+", $numero);
+                $result = (int) $subcadenaNew[0] + (int) $subcadenaNew[1];
+                $stringOriginalCopy = str_replace($numero, $result, $stringOriginalCopy);
             }
-            else if ($stringOriginal[$operaciones[$i]] == "n") {
-                $numeros[$i] = (int) $numeros[$i] * -1;
-                unset($operaciones[$i]);
-                $numeros = array_values($numeros);
-                $operaciones = array_values($operaciones);
-                $i--;
-            }
-            else if($stringOriginal[$operaciones[$i]] == "*"){
-                $numeros[$i] = (int) $numeros[$i] * (int) $numeros[$i+1];
-                unset($numeros[$i+1]);
-                unset($operaciones[$i]);
-                $numeros = array_values($numeros);
-                $operaciones = array_values($operaciones);
-                $i--;
-            }
-            else if($stringOriginal[$operaciones[$i]] == "/"){
-                $numeros[$i] = (int) $numeros[$i] / (int) $numeros[$i+1];
-                unset($numeros[$i+1]);
-                unset($operaciones[$i]);
-                $numeros = array_values($numeros);
-                $operaciones = array_values($operaciones);
-                $i--;
-            }
-            else if($stringOriginal[$operaciones[$i]] == "+"){
-                $numeros[$i] = (int) $numeros[$i] + (int) $numeros[$i+1];
-                unset($numeros[$i+1]);
-                unset($operaciones[$i]);
-                $numeros = array_values($numeros);
-                $operaciones = array_values($operaciones);
-                $i--;
-            }
-            else if($stringOriginal[$operaciones[$i]] == "-"){
-                $numeros[$i] = (int) $numeros[$i] - (int) $numeros[$i+1];
-                unset($numeros[$i+1]);
-                unset($operaciones[$i]);
-                $numeros = array_values($numeros);
-                $operaciones = array_values($operaciones);
-                $i--;
-            }
-            echo 8*3+6*2 . "<br>";
-
         }
-        var_dump($numeros) ;
     }
     $op = array(
         "mod" => "mod",
@@ -151,10 +70,10 @@ echo "Resultado: " . $resultado;
             foreach($op as $clave => $valor){
                 $indOperaciones .= obtenerIndicesDeCaracter($_SESSION['num'], $clave);
             }
-            $indOperaciones = str_split($indOperaciones);
-            sort($indOperaciones);
-            $resultSubNumeros = separarCadenaPorIndices($_SESSION['num'], $indOperaciones);
-            calculadora($indOperaciones, $resultSubNumeros, $_SESSION['num']);
+            $indOperaciones2 = str_split($indOperaciones);
+            sort($indOperaciones2);
+            $resultSubNumeros = separarCadenaPorIndices($_SESSION['num'], $indOperaciones2);
+            calculadora(str_split($indOperaciones), $resultSubNumeros, $_SESSION['num'], $indOperaciones2);
         }
         else if($_POST['numero'] == "<--"){
             $_SESSION['num'] = substr($_SESSION['num'],0, -1);
